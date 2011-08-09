@@ -39,14 +39,12 @@ class Tree:
     def removeChild(self, child):
         child.detach()
 
-    def findChild(self, start_node, data):
-        if start_node.data == data:    
-            return self.root
-
+    def findImmediateChild(self, start_node, data):
+        if start_node is None:
+            return None
         
         for child in start_node.children:
             if child.data == data:
-                return node
-            self.findChild(child, data)
+                return child
 
         return None
