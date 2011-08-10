@@ -5,6 +5,7 @@ class Node:
         self.data = data
 
     def detach(self):
+        self.parent.children.pop(self)
         self.parent = None;
         for child in children:
             child.parent = None
@@ -24,8 +25,10 @@ class Tree:
             return True
         return False
        
-    def printIt(self, node):
-        print node.data
+    def printIt(self, node=None):
+        if node is None:
+            node = self.root
+        print node.data,
         for c in node.children:
             self.printIt(c)
 
