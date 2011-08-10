@@ -6,12 +6,13 @@
 # using only valid moves
 #
 # This version uses the heuristic when chosing the next move
-# Whichever square has the most possible moves is chosen.
+# Whichever square has the least possible moves is chosen.
 # If no free squares are available the knight is taken back one
-# square and another option is taken.
+# move and another path is taken.
 
 import random
 import tree
+import sys
 import os
 
 class Square:
@@ -21,10 +22,12 @@ class Square:
 class Chessboard:
     def __init__(self, size=8, knight_start=None):
         self.size = size
+
         self.knight_start = knight_start
         if self.knight_start is None:
             self.knight_start = (random.randint(0, size-1), 
-                            random.randint(0, size-1))
+                                 random.randint(0, size-1))
+        
         self.move_history = tree.Tree()
         self. history_pos = -1
         self.initBoard()
@@ -49,6 +52,7 @@ class Chessboard:
         self.board[dest[0]][dest[1]].visited = True;
 
     def numVisited(self):
+        # There's probably a better way to do this
         count = 0
         for width in range(0, self.size):
             for height in range(0, self.size):
@@ -121,32 +125,35 @@ class Chessboard:
 
     def nextMove(self):
         knight_next = self.getValidMovesFromSquare(self.knight)
-        # now we have all possibly valid moves
+        # now we have all possible valid moves
         # which one is the best?
-        best_weight = 9999
+        best_weight = 999999
         best_move = None
         for move in knight_next:
-            if (self.board[move[0]][move[1]].visited is False and self.move_history.findImmediateChild(self.current_move, (move[0], move[1])) is None):
+            if (self.board[move[0]][move[1]].visited is False 
+                    and self.move_history.findImmediateChild(self.current_move, (move[0], move[1])) is None):
                 weight = len(self.getValidMovesFromSquare(move))
                 if weight < best_weight:
                     best_weight = weight
                     best_move = move
 
         if best_move is None:
+            # Couldn't find a good move, are we done?
             if self.numVisited() == (self.size ** 2):
                 print "done. Started at", self.knight_start
                 return False
             
-            # Couldn't find a good move
+            # Nope, are we at the top of the tree?
             if self.current_move.parent is None:
                 # Also no search space left. End
                 self.printIt()
                 print "the end"
                 return False
 
-            # Go back one and try a different path
+            # Nope, go back one and try a different path
             self.board[self.current_move.data[0]][self.current_move.data[1]].visited = False
-            self.current_move = self.current_move.parent 
+            self.current_move = self.current_move.parent
+            # But don't add this to the tree again.
             self.moveKnight(self.current_move.data, False)
             return True
        
@@ -156,6 +163,7 @@ class Chessboard:
 
     def printIt(self):
         # Simple screen clear (nix only)
+        # * is visited and 0 is not visited
         os.system('clear')
         height = 0
         for width in range(0, self.size):
@@ -172,7 +180,11 @@ class Chessboard:
         print "+"
 
 if __name__ == "__main__":
-    cb = Chessboard(size=6)
+    size = 6
+    if len(sys.argv) > 1:
+        size = int(sys.argv[1])
+
+    cb = Chessboard(size=size)
     print 
     while cb.nextMove():
         pass
