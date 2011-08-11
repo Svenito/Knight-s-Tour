@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-# Travelling knight
+# Knight's journey
 #
 # A knight on a N*N chess board must visit all squares once
-# using only valid moves
+# using only valid moves. Start point may be anywhere on the
+# board
 #
-# This version uses the heuristic when chosing the next move
+# This version uses a heuristic when chosing the next move
 # Whichever square has the least possible moves is chosen.
 # If no free squares are available the knight is taken back one
 # move and another path is taken.
@@ -29,6 +30,11 @@ class Chessboard:
                                  random.randint(0, size-1))
         
         self.move_history = tree.Tree()
+        # As the tree will also store history
+        # use this to store solution
+        self.solution = []
+        self.solution.append(self.knight_start)
+
         self. history_pos = -1
         self.initBoard()
         self.current_move = None
@@ -130,38 +136,44 @@ class Chessboard:
         best_weight = 999999
         best_move = None
         for move in knight_next:
+            # Valid choice if it's not been visited and not
+            # already tried from this square.
             if (self.board[move[0]][move[1]].visited is False 
                     and self.move_history.findImmediateChild(self.current_move, (move[0], move[1])) is None):
                 weight = len(self.getValidMovesFromSquare(move))
                 if weight < best_weight:
                     best_weight = weight
                     best_move = move
-
         if best_move is None:
             # Couldn't find a good move, are we done?
             if self.numVisited() == (self.size ** 2):
                 print "done. Started at", self.knight_start
+                print "Solved in %d moves" % len(self.solution)
+                self.printSolution()
                 return False
             
             # Nope, are we at the top of the tree?
             if self.current_move.parent is None:
                 # Also no search space left. End
-                self.printIt()
-                print "the end"
+                self.printBoardState()
+                print "Unable to find solution"
                 return False
 
             # Nope, go back one and try a different path
             self.board[self.current_move.data[0]][self.current_move.data[1]].visited = False
+            # Also remove this from the solution
+            self.solution.remove((self.current_move.data[0], self.current_move.data[1]))
             self.current_move = self.current_move.parent
             # But don't add this to the tree again.
             self.moveKnight(self.current_move.data, False)
             return True
        
         self.moveKnight(best_move)
-        self.printIt()
+        self.solution.append(best_move)
+        self.printBoardState()
         return True
 
-    def printIt(self):
+    def printBoardState(self):
         # Simple screen clear (nix only)
         # * is visited and 0 is not visited
         os.system('clear')
@@ -178,6 +190,23 @@ class Chessboard:
             print i,
 
         print "+"
+
+    def printSolution(self):
+        print
+        height = 0
+        # Print order of moves for solution
+        for width in range(0, self.size ):
+            for height in range(0, self.size):
+                if self.board[width][height].visited:
+                    print "%2d" % (self.solution.index((width, height)) + 1),
+            
+            print " :",width
+            
+        print "--------------------"
+        for i in range(0, self.size):
+            print "%2d" % i,
+        
+        print
 
 if __name__ == "__main__":
     size = 6
